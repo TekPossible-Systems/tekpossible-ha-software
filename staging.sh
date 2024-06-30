@@ -72,6 +72,7 @@ echo "
     Program Developed by TekPossible Systems (Griffin Kiesecker)                                                                                       
 "
 
+sudo mkdir /opt/staging
 # Install software dependencies
 sudo dnf install -y python3-pip httpd mod_ssl
 sudo pip3 install flask pandas
@@ -95,3 +96,7 @@ WantedBy=multi-user.target
 EOF
 
 echo "TekPossible HA Software has successfully been installed!"
+VERSION=$(git tag -l)
+sudo echo $VERSION > /etc/tekpossible-ha-release
+sudo mkdir /opt/staging/$VERSION
+sudo cp -r ./* /opt/staging/$VERSION
