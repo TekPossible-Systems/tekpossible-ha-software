@@ -96,7 +96,7 @@ WantedBy=multi-user.target
 EOF
 
 echo "TekPossible HA Software has successfully been installed!"
-VERSION=$(git tag -l)
+VERSION=$(git tag --points-at HEAD)
 sudo echo $VERSION > /etc/tekpossible-ha-release
 sudo mkdir /opt/staging/$VERSION
 sudo cp -r ./* /opt/staging/$VERSION
