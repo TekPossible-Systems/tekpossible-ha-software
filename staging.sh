@@ -99,4 +99,4 @@ echo "TekPossible HA Software has successfully been installed!"
 VERSION=$(git tag --points-at HEAD)
 sudo echo $VERSION > /etc/tekpossible-ha-release
 sudo mkdir /opt/staging/$VERSION
-sudo cp -r ./* /opt/staging/$VERSION
+sudo cp -r ./src/* /opt/staging/$VERSION
