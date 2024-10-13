@@ -4,10 +4,16 @@ phases:
     commands:
       - yum install -y git
       - echo "Bundling up the software"
-      - tar -cvf tekpossible-ha.tar ./*
+      - tar -cvf tekpossible-ha-$(git log | git rev-parse --short=12 HEAD).tar ./*
       - export SOFTWARE_HASH=$(sha256sum ./tekpossible-ha.tar)
-      - <<awscli command for s3>>
+      - <<awscli command for s3 copy here>>
+      - cd /tmp
       - git clone <image-repo-here>
       - cd <image-repo-name>/ansible/inventory/localsetup
       - sed -i 's/BUCKET_URL_HERE/<<s3_bucket_url_here>>/g' ./hosts.yml
       - sed -i 's/SOFTWARE_TAR_HASH_HERE/<<software_tar_hash_here>>/g' ./hosts.yml
+
+# The plan and the reason for it:
+# The problem is that I need to have an external git repo reference that cannot be made in this file. I need to have some sort of external, AWS variable or external thing I can curl to get that repo information. 
+# My plan is to use AWS secret manager to store these values, like the s3 bucket and the external git repo. 
+# This also will solve the same problem we would see in the image repo for when I am commiting to the infrastructure repo.
