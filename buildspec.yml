@@ -4,16 +4,28 @@ phases:
     commands:
       - yum install -y git
       - echo "Bundling up the software"
-      - tar -cvf tekpossible-ha-$(git log | git rev-parse --short=12 HEAD).tar ./*
+      - export CDK_STACK_BASE_NAME_LOWER="tekpossible-stratagem"
+      - export CURRENT_BRANCH=$(git branch --show-current)
+      - export SOFTWARE_COMMIT_SHORT=$(git log | git rev-parse --short=12 HEAD)
       - export SOFTWARE_HASH=$(sha256sum ./tekpossible-ha.tar)
-      - <<awscli command for s3 copy here>>
+      - export BUCKET_NAME=$(aws ssm get-parameter --name $CDK_STACK_BASE_NAME_LOWER-s3-bucket --query 'Parameter.Value' | sed 's/"//g')
+      - export IMAGE_REPO_URL=$(aws ssm get-parameter --name $CDK_STACK_BASE_NAME_LOWER-image-repo --query 'Parameter.Value' | sed 's/"//g')
+      - tar -cvf tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar ./*
+      - aws s3 cp ./tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar s3://$BUCKET_NAME/tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar
       - cd /tmp
-      - git clone <image-repo-here>
-      - cd <image-repo-name>/ansible/inventory/localsetup
-      - sed -i 's/BUCKET_URL_HERE/<<s3_bucket_url_here>>/g' ./hosts.yml
-      - sed -i 's/SOFTWARE_TAR_HASH_HERE/<<software_tar_hash_here>>/g' ./hosts.yml
+      - git clone $IMAGE_REPO_URL
+      - cd /tmp/*ami*
+      - git checkout $CURRENT_BRANCH                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+      - python3 ./ansible_set.py software_s3_bucket s3://$BUCKET_NAME/tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar
+      - python3 ./ansible_set.py software_tar_hash $SOFTWARE_HASH
+      - sed -i "s/SOFTWARE_TAR_HASH_HERE/$SOFTWARE_HASH/g" ./hosts.yml
+      - git commit -am "Automated CI/CD Commit from Software Repo. Added updated"
+      - git push
 
 # The plan and the reason for it:
 # The problem is that I need to have an external git repo reference that cannot be made in this file. I need to have some sort of external, AWS variable or external thing I can curl to get that repo information. 
 # My plan is to use AWS secret manager to store these values, like the s3 bucket and the external git repo. 
 # This also will solve the same problem we would see in the image repo for when I am commiting to the infrastructure repo.
+# I will not be able to use sed to replace the values. I will need to use some sort of value swapper. See ansible_set.py in the ami repo
+# Now I am almost done, but i am not sure about how git pushing is going to work. I need to try to do it with a ec2 image with a instance profile set up for codecommit. 
+# If the instance profile does not work, we will need to make a role with an ssh key that will. I am not sure about that.
