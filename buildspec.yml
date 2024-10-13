@@ -1,1 +1,13 @@
-## TODO - THINK OF THIS A LITTLE MORE
+version: 0.2
+phases:
+  install:
+    commands:
+      - yum install -y git
+      - echo "Bundling up the software"
+      - tar -cvf tekpossible-ha.tar ./*
+      - export SOFTWARE_HASH=$(sha256sum ./tekpossible-ha.tar)
+      - <<awscli command for s3>>
+      - git clone <image-repo-here>
+      - cd <image-repo-name>/ansible/inventory/localsetup
+      - sed -i 's/BUCKET_URL_HERE/<<s3_bucket_url_here>>/g' ./hosts.yml
+      - sed -i 's/SOFTWARE_TAR_HASH_HERE/<<software_tar_hash_here>>/g' ./hosts.yml
