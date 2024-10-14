@@ -14,6 +14,8 @@ phases:
       - tar -cvf tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar ./*
       - aws s3 cp ./tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar s3://$BUCKET_NAME/tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar
       - cd /tmp
+      - git config --global credential.helper '!aws codecommit credential-helper $@'
+      - git config --global credential.UseHttpPath true
       - git clone $IMAGE_REPO_URL
       - cd /tmp/*ami*
       - git checkout $CURRENT_BRANCH                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
