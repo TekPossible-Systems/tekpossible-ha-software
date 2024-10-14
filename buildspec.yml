@@ -2,7 +2,8 @@ version: 0.2
 phases:
   install:
     commands:
-      - yum install -y git
+      - yum install -y git python3-pip
+      - pip3 install git-remote-codecommit
       - echo "Bundling up the software"
       - export CDK_STACK_BASE_NAME_LOWER="tekpossible-stratagem"
       - export CURRENT_BRANCH=$(git branch --show-current)
