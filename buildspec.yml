@@ -18,7 +18,6 @@ phases:
       - git checkout $CURRENT_BRANCH                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
       - python3 ./ansible_set.py software_s3_bucket s3://$BUCKET_NAME/tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar
       - python3 ./ansible_set.py software_tar_hash $SOFTWARE_HASH
-      - sed -i "s/SOFTWARE_TAR_HASH_HERE/$SOFTWARE_HASH/g" ./hosts.yml
       - git commit -am "Automated CI/CD Commit from Software Repo. Added updated"
       - git push
 
