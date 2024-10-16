@@ -21,7 +21,7 @@ phases:
       - git checkout $CURRENT_BRANCH                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
       - python3 ./ansible_set.py software_s3_bucket s3://$BUCKET_NAME/tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar
       - python3 ./ansible_set.py software_tar_hash $SOFTWARE_HASH
-      - git commit -am "Automated CI/CD Commit from Software Repo. Added updated"
+      - git commit -am "Automated CI/CD Commit from Software Repo. Added updated software TAR file location and hash to the AMI repo"
       - git push
 
 # The plan and the reason for it:
