@@ -5,14 +5,14 @@ phases:
       - yum install -y git python3-pip
       - pip3 install git-remote-codecommit
       - echo "Bundling up the software"
-      - tar -cvf tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar ./*
+      - tar -cvf tekpossible-ha.tar ./*
       - export CDK_STACK_BASE_NAME_LOWER="tekpossible-stratagem"
       - export CURRENT_BRANCH=$(git branch --show-current)
       - export SOFTWARE_COMMIT_SHORT=$(git log | git rev-parse --short=12 HEAD)
       - export SOFTWARE_HASH=$(sha256sum ./tekpossible-ha.tar)
       - export BUCKET_NAME=$(aws ssm get-parameter --name $CDK_STACK_BASE_NAME_LOWER-s3-bucket --query 'Parameter.Value' | sed 's/"//g')
       - export IMAGE_REPO_URL=$(aws ssm get-parameter --name $CDK_STACK_BASE_NAME_LOWER-image-repo --query 'Parameter.Value' | sed 's/"//g')
-      - aws s3 cp ./tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar s3://$BUCKET_NAME/tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar
+      - aws s3 cp ./tekpossible-ha.tar s3://$BUCKET_NAME/tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar
       - cd /tmp
       - git config --global credential.helper '!aws codecommit credential-helper $@'
       - git config --global credential.UseHttpPath true
