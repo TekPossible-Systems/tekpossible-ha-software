@@ -7,6 +7,8 @@ phases:
       - echo "Bundling up the software"
       - tar -cvf tekpossible-ha.tar ./*
       - export CDK_STACK_BASE_NAME_LOWER="tekpossible-stratagem"
+      - export CI_CD_USERNAME="CI/CD TekPossible GEM"
+      - export CI_CD_EMAIL="ci-cd@tekpossible.com"
       - export CURRENT_BRANCH=$(git branch --show-current)
       - export SOFTWARE_COMMIT_SHORT=$(git log | git rev-parse --short=12 HEAD)
       - export SOFTWARE_HASH=$(sha256sum ./tekpossible-ha.tar)
@@ -21,6 +23,8 @@ phases:
       - git checkout $CURRENT_BRANCH                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
       - python3 ./ansible_set.py software_s3_bucket s3://$BUCKET_NAME/tekpossible-ha-$SOFTWARE_COMMIT_SHORT.tar
       - python3 ./ansible_set.py software_tar_hash $SOFTWARE_HASH
+      - git config --global user.email "$CI_CD_EMAIL"
+      - git config --global user.name "$CI_CD_USERNAME"
       - git commit -am "Automated CI/CD Commit from Software Repo. Added updated software TAR file location and hash to the AMI repo"
       - git push
 
