@@ -3,6 +3,7 @@
 LATEST_SOFTWARE_VERSION=$(cat /etc/tekpossible-ha-release)
 echo "Setting up software baseline and moving installed software from staging to EFS store..."
 mkdir -p /software/tekp-ha
+mkdir -p /opt/tekp-ha
 \cp -r /opt/staging/* /software/tekp-ha
 rm -rf /opt/staging
 unlink /opt/tekp-ha/current
