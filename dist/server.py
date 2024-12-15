@@ -7,56 +7,36 @@ logo = """
     |_|  |______|_|\_\_|     \____/|_____/_____/|_____|____/|______|______|    |_|  |_/_/    \_\\
 
 
-    Port Opening Program Developed by TekPossible Systems (Griffin Kiesecker)    
-    This is mainly a program that is here until I write something cooler    
+    Fun to write Clustering Program Developed by TekPossible Systems (Griffin Kiesecker)    
+    This is mainly just to do something kinda fun and refresh my python skills
 """
 
-import socket
 import os
-import threading
+from alpha.alpha import AlphaServer
+from bravo.bravo import BravoServer
 
-__ports = os.popen("firewall-cmd --list-ports").read().replace("/tcp", "").strip().split(" ")
-sockets = []
-threads = []
+__hostname = os.popen("hostname").read().rstrip()
+__server_alpha = "AlphaServer"
+__server_bravo = "BravoServer"
+
+# ALPHA PORTS
+alpha_internal_status = 10001
+alpha_internal_queue = 10002
+alpha_external_queue_send = 8000
+alpha_external_queue_recv  = 8001
+
+# BRAVO PORTS
+bravo_internal_status = 10003
+bravo_internal_queue = 10004
+bravo_external_queue_send = 8002
+bravo_external_queue_recv  = 8003
+
 print(logo)
 
-def handle_socket(s: socket.socket):
-    print("Started new thread!")
-    conn, addr = s.accept()
-    with conn:
-        print(f"Connected by {addr}")
-        while True:
-            try:
-                data = conn.recv(1024)
-                print(data.decode('utf-8'))
-                if not data:
-                    break
-                conn.sendall(bytes("RECV: " + data.decode('utf-8'), 'utf-8'))
-            except:
-                s.close()
+if __server_alpha in __hostname: 
+    server_a = AlphaServer(__hostname, alpha_internal_status, alpha_internal_queue, alpha_external_queue_send, alpha_external_queue_recv, bravo_external_queue_send, bravo_external_queue_recv );
+    server_a.run()
 
-
-
-for i in range(len(__ports)):
-    if (int(__ports[i]) < 1000):
-        continue
-    else:
-        print(int(__ports[i]))
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('', int(__ports[i])))
-        s.listen(50)
-        sockets.append(s)
-        print(f"LISTENING ON PORT {__ports[i]}!")
-
-
-for s in sockets:
-    thr = threading.Thread(target=handle_socket, args=(s,), daemon=False)
-    thr.start()
-    threads.append(thr)
-
-while True:
-    try:
-        continue
-    except:
-        for thread in threads:
-            thread.join()
+if __server_bravo in __hostname: 
+    server_b = BravoServer(__hostname, bravo_internal_status, bravo_internal_queue, bravo_external_queue_send, bravo_external_queue_recv, alpha_external_queue_send, alpha_external_queue_recv );
+    server_b.run()
