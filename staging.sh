@@ -89,7 +89,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=root
-ExecStart=/usr/bin/python3 /opt/tekp-ha/current/server.py
+ExecStart=/usr/bin/python3 -u /opt/tekp-ha/current/server.py
 
 [Install]
 WantedBy=multi-user.target
