@@ -3,6 +3,8 @@ import socket
 import threading
 import json
 import time
+import uuid
+
 class BravoServer:
     def __init__(self, hostname, internal_status_port, internal_queue_port, external_queue_port_send, external_queue_port_recv, alpha_queue_port_send, alpha_queue_port_recv  ):
         self.hostname = hostname
@@ -16,6 +18,9 @@ class BravoServer:
         self.bravo_secret = "ABCDEFG"
         self.alpha_remote_loadbalancer = ""
         self.lock = None    
+        self.msg_queue = []
+        self.queue_updated = None
+
     def generate_status_message(self):
         status_message = {
             "hostname": self.hostname,
@@ -27,7 +32,45 @@ class BravoServer:
         }
         return(json.dumps(status_message))
 
-    # def get_bravo_secret(): TODO: We will need to write a AWS secret manager call here once we are cloud ready
+   # def generate_queue_message(self, queue_data):
+
+    def start_queue_recv(self):
+        queue_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        queue_listener.bind(('0.0.0.0', self.internal_queue_port))
+        queue_listener.listen(100)
+        while True:
+            (client_socket, address) = queue_listener.accept()
+            print("Connection <<INT-QUEUE>> Started: " + str(address))
+            thread = threading.Thread(self.queue_handler_recv(client_socket, address))
+
+    def queue_handler_recv(self, client_socket: socket.socket, address):
+        while True:
+            self.lock.acquire()
+            queue_msg = client_socket.recv(4096)
+            self.msg_queue.append(json.loads(str(queue_msg.decode())))
+            queue_msg.send("ACK")
+            self.lock.release()
+
+    def start_queue_send(self):
+        while True:
+            if self.queue_updated != None:
+                self.lock.acquire()
+                self.msg_queue.append(self.queue_updated)
+                for bravo_server in self.bravo_servers:
+                    if bravo_server['isReady']:
+                        send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        send_socket.connect(( bravo_server['ip_address'], self.internal_queue_port))
+                        response = send_socket.recv(4096)
+                        if "ACK" in str(response.decode()):
+                            send_socket.close()
+                        else:
+                            print("Error in sending queue update to server " + bravo_server['ip_address'] + "!")
+                            send_socket.close()
+                self.queue_updated = None
+                self.lock.release()
+            time.sleep(5) # At the moment, wait 5 seconds 
+
+    # def get_bravo_secret(): TODO: We will need to write a AWS secret manager call here once we are fully cloud ready
     def get_ip_address(self):
         return(os.popen("ip -o route get 1.1.1.1 | cut -d \" \" -f 7").read().rstrip())
         
@@ -45,12 +88,7 @@ class BravoServer:
 
     def recv_client_status(self, client_socket: socket.socket, address):
         client_socket.send(bytes(self.generate_status_message(), 'utf-8'))
-        client_data = client_socket.recv(4096) # RECEIVE UP TO 4096 BYTES
-
-        try: # Make sure the data is valid json
-            client_status: str = json.loads(str(client_data.decode()))
-        except:
-            x = 0 # Error parsing the JSON object that was sent to us
+        time.sleep(0.2)
         print("Connection <<STATUS>> Ended: " + str(address))
         client_socket.close()
 
@@ -71,15 +109,15 @@ class BravoServer:
                             client_data = client_socket.recv(4096) # RECEIVE UP TO 4096 BYTES
                             try: # Make sure the data is valid json
                                 client_status = json.loads(str(client_data.decode()))
-                                self.lock.acquire()
                                 is_duplicate =  False
+                                self.lock.acquire()
                                 for i in range(len(self.bravo_servers)):
                                     if self.bravo_servers[i]["hostname"] == client_status["hostname"]:
                                         is_duplicate = True
                                         if self.bravo_servers[i]["isReady"] != client_status["isReady"]:
                                             self.bravo_servers[i]["isReady"] = client_status["isReady"]
                                 self.lock.release()
-                                if (client_status["server_secret"] == self.bravo_secret) and (client_status["isReady"] == True) and (client_status["server_type"] == "BRAVO") and (is_duplicate == False):
+                                if (client_status["server_secret"] == self.alpha_secret) and (client_status["isReady"] == True) and (client_status["server_type"] == "BRAVO") and (is_duplicate == False):
                                     self.lock.acquire()
                                     self.bravo_servers.append({"hostname": client_status["hostname"], "ip_address": current_ip, "isReady": client_status["isReady"]})
                                     self.lock.release()
