@@ -117,7 +117,7 @@ class BravoServer:
                                         if self.bravo_servers[i]["isReady"] != client_status["isReady"]:
                                             self.bravo_servers[i]["isReady"] = client_status["isReady"]
                                 self.lock.release()
-                                if (client_status["server_secret"] == self.alpha_secret) and (client_status["isReady"] == True) and (client_status["server_type"] == "BRAVO") and (is_duplicate == False):
+                                if (client_status["server_secret"] == self.bravo_secret) and (client_status["isReady"] == True) and (client_status["server_type"] == "BRAVO") and (is_duplicate == False):
                                     self.lock.acquire()
                                     self.bravo_servers.append({"hostname": client_status["hostname"], "ip_address": current_ip, "isReady": client_status["isReady"]})
                                     self.lock.release()
@@ -137,9 +137,11 @@ class BravoServer:
         cluster_listener.start()
         cluster_search = threading.Thread(target=self.find_servers)
         cluster_search.start()
+        queue_recv = threading.Thread(target=self.start_queue_recv)
+        queue_recv.start()
+        queue_send = threading.Thread(target=self.start_queue_send)
+        queue_send.start()
         self.bravo_servers.append({"hostname": self.hostname, "ip_address": self.get_ip_address(), "isReady": self.isReady()})
         while True:
-            self.lock.acquire()
             print("Currently running with following bravo_servers: " + str(self.bravo_servers))
-            self.lock.release()
             time.sleep(10)
